@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as gfonts from './gfonts.mjs';
 import os from 'node:os';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -114,7 +115,10 @@ export async function provideFonts(families) {
   const e = await load(); let n = 0;
   for (const fam of families) {
     const key = String(fam).toLowerCase().replace(/[^a-z0-9]/g, ''); if (!key || loadedFamilies.has(key)) continue; loadedFamilies.add(key);
-    for (const f of indexFonts().filter((x) => x.key.startsWith(key))) { try { const buf = fs.readFileSync(f.p); if (buf.length > 40 << 20) continue; const [p, len] = put(e, buf); e.dc_add_font(p, len); e.dc_free(p, len); n++; } catch {} }
+    let files = indexFonts().filter((x) => x.key.startsWith(key)).map((x) => x.p);
+    // not on this computer: use the Google Fonts copy (downloaded once, then cached)
+    if (!files.length) { try { files = await gfonts.ensure(fam); } catch { files = gfonts.cachedFiles(fam); } }
+    for (const f of files.map((p) => ({ p }))) { try { const buf = fs.readFileSync(f.p); if (buf.length > 40 << 20) continue; const [p, len] = put(e, buf); e.dc_add_font(p, len); e.dc_free(p, len); n++; } catch {} }
   }
   return n;
 }

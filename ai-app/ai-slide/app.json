@@ -13,6 +13,7 @@
       "skill:ai-slide/css/app.css",
       "skill:ai-slide/js/i18n.js",
       "skill:ai-slide/js/render.js",
+      "skill:ai-slide/js/fonts.js",
       "skill:ai-slide/js/editor.js",
       "skill:ai-slide/js/commands.js",
       "skill:ai-slide/js/show.js"
@@ -305,6 +306,66 @@
           }
         },
         "heal": false
+      },
+      "fontList": {
+        "description": "Danh sách Google Fonts (lọc theo tên, chỉ font có tiếng Việt).",
+        "args": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "query": {
+              "type": "string"
+            },
+            "vi": {
+              "type": "boolean"
+            },
+            "limit": {
+              "type": "number"
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "required": [
+            "items"
+          ],
+          "properties": {
+            "total": {
+              "type": "number"
+            },
+            "items": {
+              "type": "array"
+            }
+          }
+        }
+      },
+      "fontFaces": {
+        "description": "Tải (một lần, có cache) các tệp của một font Google để trang hiển thị.",
+        "args": {
+          "type": "object",
+          "required": [
+            "family"
+          ],
+          "properties": {
+            "family": {
+              "type": "string"
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "required": [
+            "faces"
+          ],
+          "properties": {
+            "family": {
+              "type": "string"
+            },
+            "faces": {
+              "type": "array"
+            }
+          }
+        }
       }
     }
   },

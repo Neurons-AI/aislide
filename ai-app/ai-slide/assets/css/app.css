@@ -151,3 +151,13 @@ body { overflow: hidden; }
 .ds-rarrow { position: absolute; top: 0; bottom: 0; width: 26px; border: 0; background: linear-gradient(90deg, transparent, var(--ds-chrome) 45%); color: var(--ds-fg); cursor: pointer; font-size: 16px; z-index: 2; }
 .ds-rarrow.l { left: 0; background: linear-gradient(270deg, transparent, var(--ds-chrome) 45%); }
 .ds-rarrow.r { right: 0; }
+
+/* Google Fonts picker */
+.ds-fontbtn{display:inline-flex;align-items:center;justify-content:space-between;gap:6px;width:150px;text-align:left;overflow:hidden}
+.ds-fontbtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ds-fontbtn i{font-style:normal;opacity:.6;font-size:10px}
+.ds-fontpick{position:fixed;z-index:60;width:290px;padding:8px;display:flex;flex-direction:column}
+.ds-fontpick .fp-list{max-height:min(60vh,420px);overflow:auto;margin-top:2px}
+.ds-fontpick h6{margin:8px 4px 4px;font:600 10.5px/1 system-ui;letter-spacing:.06em;text-transform:uppercase;color:var(--ds-muted)}
+.ds-fontpick .fp-row{display:flex;width:100%;align-items:baseline;justify-content:space-between;gap:8px;border:0;background:none;color:inherit;padding:6px 8px;border-radius:6px;font-size:16px;cursor:pointer;text-align:left}
+.ds-fontpick .fp-row:hover{background:var(--ds-hover,rgba(0,0,0,.06))}
+.ds-fontpick .fp-row small{font:11px system-ui;color:var(--ds-muted);white-space:nowrap}

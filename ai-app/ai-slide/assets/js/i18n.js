@@ -483,7 +483,14 @@ Thuyết minh|Narration|旁白|ナレーション|내레이션
 Phông chữ|Font|字体|フォント|글꼴
 Đoạn văn|Paragraph|段落|段落|단락
 Bảng tạm|Clipboard|剪贴板|クリップボード|클립보드
-Chủ đề|Themes|主题|テーマ|테마`;
+Chủ đề|Themes|主题|テーマ|테마
+Tìm phông chữ Google…|Search Google Fonts…|搜索 Google 字体…|Google Fonts を検索…|Google 글꼴 검색…
+Chỉ phông có tiếng Việt|Only fonts with Vietnamese|仅含越南语的字体|ベトナム語対応のみ|베트남어 지원 글꼴만
+Đang tải danh sách Google Fonts…|Loading Google Fonts…|正在加载 Google 字体…|Google Fonts を読み込み中…|Google 글꼴 불러오는 중…
+Gần đây|Recent|最近使用|最近使用|최근
+Trên máy này|On this computer|本机字体|このコンピューター|이 컴퓨터
+Không tìm thấy|No results|未找到|見つかりません|결과 없음
+Đang tải…|Loading…|加载中…|読み込み中…|불러오는 중…`;
   const L = ['vi', 'en', 'zh', 'ja', 'ko'];
   const DICT = {}; for (const line of RAW.split('\n')) { const p = line.split('|'); if (p.length < 5) continue; if (!DICT[p[0]]) DICT[p[0]] = p; }
   const KEYS = Object.keys(DICT).filter((k) => k.length >= 3).sort((a, b) => b.length - a.length);

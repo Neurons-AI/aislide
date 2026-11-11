@@ -6,6 +6,7 @@
   const S = window.Slide;
   try { await Promise.race([aicw.ready(), new Promise((r) => setTimeout(r, 1500))]); } catch (e) {}
   S.mount(document.getElementById("app-root"));
+  setTimeout(() => { try { S.fontCatalog(); } catch (e) {} }, 1500); // warm the Google Fonts list
   S.initLang();
   try { const st = aicw.getState && aicw.getState(); if (st && st.theme) document.documentElement.setAttribute('data-theme', st.theme); } catch (e) {}
   let loaded = false;

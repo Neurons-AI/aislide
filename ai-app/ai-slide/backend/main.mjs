@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { readPptx, writePptx } from './pptx.mjs';
 import * as engine from './engine.mjs';
+import * as gfonts from './gfonts.mjs';
 // A Rust panic / failed engine build is a CODE bug: the user still gets a result (fallback), and the
 // page calls `reportEngineBug`, which re-raises it so AICoworker's bug ledger + self-healing see it.
 let lastEngineBug = null;
@@ -160,6 +161,9 @@ export const commands = {
     return { png: 'data:image/png;base64,' + png.toString('base64') };
   },
 
+  // Google Fonts: catalog for the font picker, and the files of one family for the page
+  async fontList({ query, vi, limit }) { const all = await gfonts.list(); const q = String(query || '').toLowerCase(); let r = all.filter((f) => (!q || f.family.toLowerCase().includes(q)) && (!vi || f.vi)); return { total: r.length, items: r.slice(0, Math.min(5000, limit || 200)).map(({ family, category, vi: v }) => ({ family, category, vi: v })) }; },
+  async fontFaces({ family }) { return { family, faces: await gfonts.faces(family) }; },
   async capabilities() { return { soffice: !!findSoffice(), converter: findSoffice() ? 'libreoffice' : null, read: [...OOXML, ...LEGACY, 'odp', 'otp', 'txt', 'md', 'json'], write: [...OOXML, ...LEGACY, 'odp', 'otp', 'pdf', 'png', 'jpg', 'txt', 'rtf'] }; },
 
   async recent(_a, ctx) { return { items: (await ctx.store.user.get('recent')) || [] }; },

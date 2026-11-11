@@ -183,6 +183,7 @@
       case 'anPreview': return S.previewAnim(slide().els.filter((e) => e.anim));
       // show
       case 'showStart': return S.slideshow(0); case 'showCurrent': return S.slideshow(st.cur); case 'presenter': return S.slideshow(st.cur, { presenter: true }); case 'rehearse': return S.slideshow(0, { rehearse: true });
+      case 'fontPicker': return S.fontPicker(btn);
       case 'recNarr': return S.recordNarration();
       case 'insAudio': { const f = await S.pickLocal('audio/*,.mp3,.m4a,.wav,.ogg,.webm'); if (!f[0]) return; const src = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f[0]); }); S.push('audio'); S.slide().els = S.slide().els.filter((e) => !(e.type === 'audio' && e.narration)); return S.addEl({ type: 'audio', src, name: f[0].name, x: S.deck().w - 60, y: S.deck().h - 60, w: 40, h: 40 }); }
       case 'clearNarr': { S.push('clearNarr'); S.deck().slides.forEach((s) => (s.els = s.els.filter((e) => !(e.type === 'audio' && e.narration)))); S.renderAll(); return S.toast('Đã xoá thuyết minh'); }

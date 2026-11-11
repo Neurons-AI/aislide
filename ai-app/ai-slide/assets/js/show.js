@@ -133,7 +133,7 @@
     } catch (e) { console.warn('backdrop', e); }
   };
   S.loadBackdrops = async () => { const d = S.deck(); if (!d.engineKey) return; const order = [S.st.cur, ...d.slides.map((_, i) => i).filter((i) => i !== S.st.cur)]; for (const i of order) { if (S.deck() !== d) return; await S.refreshBackdrop(i); } };
-  S.load = (d, name) => { setTimeout(() => S.loadBackdrops(), 0); d.slides = d.slides?.length ? d.slides : [S.newSlide(d, 'Title Slide')]; d.w = d.w || 960; d.h = d.h || 540; d.sections = d.sections || []; if (!d.themeId) d.themeId = d.theme ? undefined : 'office'; st.deck = d; st.cur = 0; st.sel = []; st.undo = []; st.redo = []; st.fileName = name || ''; st.dirty = false; st.view = 'normal'; S.leaveSorter(); S.renderAll(); S.autosave(); };
+  S.load = (d, name) => { setTimeout(() => { S.loadBackdrops(); S.loadDeckFonts(d); }, 0); d.slides = d.slides?.length ? d.slides : [S.newSlide(d, 'Title Slide')]; d.w = d.w || 960; d.h = d.h || 540; d.sections = d.sections || []; if (!d.themeId) d.themeId = d.theme ? undefined : 'office'; st.deck = d; st.cur = 0; st.sel = []; st.undo = []; st.redo = []; st.fileName = name || ''; st.dirty = false; st.view = 'normal'; S.leaveSorter(); S.renderAll(); S.autosave(); };
   async function slideImages(type = 'image/jpeg', px = 1600) { const out = []; for (let i = 0; i < deck().slides.length; i++) { if (deck().slides[i].hidden && type === 'image/jpeg') continue; out.push(await S.rasterize(deck().slides[i], deck(), px, type, .9)); } return out; }
   S.saveAs = async (fmt) => {
     S.commitEdit(); const title = deck().title || 'Bản trình chiếu';

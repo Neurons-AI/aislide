@@ -115,5 +115,19 @@
    "png": "",
    "missing": true
   }
+ },
+ {
+  "command": "fontList",
+  "args": {
+   "query": "vietnam",
+   "vi": true,
+   "limit": 5
+  }
+ },
+ {
+  "command": "fontFaces",
+  "args": {
+   "family": "Be Vietnam Pro"
+  }
  }
 ]
