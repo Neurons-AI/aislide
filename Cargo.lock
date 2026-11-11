@@ -1339,6 +1339,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "deckcraft-wasm-core"
+version = "0.15.0"
+dependencies = [
+ "deckcraft-fonts",
+ "deckcraft-format",
+ "deckcraft-model",
+ "deckcraft-pdf",
+ "deckcraft-pptx",
+ "deckcraft-render",
+ "image",
+ "serde_json",
+]
+
+[[package]]
 name = "deckcraft-web"
 version = "0.15.0"
 dependencies = [
