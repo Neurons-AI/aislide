@@ -22,7 +22,7 @@
     "runtime": "node",
     "entry": "backend/main.mjs",
     "commands": {
-      "open": {
+      "openFile": {
         "description": "Mở tệp đã tải lên (pptx, pptm, ppsx, ppsm, potx, potm, ppt, pps, pot, odp, otp, txt/md dàn ý, json) và trả về bản trình chiếu để soạn.",
         "args": {
           "type": "object",
@@ -281,6 +281,9 @@
           "properties": {
             "png": {
               "type": "string"
+            },
+            "missing": {
+              "type": "boolean"
             }
           }
         }
@@ -315,7 +318,7 @@
   },
   "secrets": [],
   "requires": {
-    "aicoworker": ">=2026.8.5",
+    "aicoworker": ">=2026.8.7",
     "runtimes": [
       {
         "id": "soffice",
@@ -349,6 +352,11 @@
     "install": [
       {
         "kind": "npm"
+      },
+      {
+        "kind": "command",
+        "command": "npm run -s setup-tools",
+        "timeoutMs": 3600000
       }
     ],
     "health": {
@@ -356,5 +364,6 @@
         "command": "capabilities"
       }
     }
-  }
+  },
+  "compatibility": "Lần cài đầu, app tự tải và cài (theo người dùng, không cần quyền admin, khoảng 600 MB, 5–15 phút tuỳ mạng): Rust để AICoworker tự sửa và build lại engine khi có lỗi, LibreOffice để mở/lưu .ppt 97-2003. Thiếu chúng app vẫn chạy."
 }

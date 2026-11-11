@@ -22,7 +22,7 @@ let inst = null; let instFrom = null;
 // Hash of every file that changes the build: crates/**/{*.rs,Cargo.toml}, Cargo.toml, Cargo.lock.
 export function sourceHash(dir = SRC) {
   const h = crypto.createHash('sha256'); const files = [];
-  const walk = (d, rel) => { let es = []; try { es = fs.readdirSync(d, { withFileTypes: true }); } catch { return; } for (const e of es) { if (e.name === 'target' || e.name.startsWith('.')) continue; const p = path.join(d, e.name), r = rel ? rel + '/' + e.name : e.name; if (e.isDirectory()) walk(p, r); else if (/\.(rs|toml|lock|ttf|otf|bin)$/.test(e.name)) files.push([r, p]); } };
+  const walk = (d, rel) => { let es = []; try { es = fs.readdirSync(d, { withFileTypes: true }); } catch { return; } for (const e of es) { if (e.name === 'target' || e.name.startsWith('.') || e.name === 'Cargo.lock') continue; /* cargo rewrites the lock on build: hash only what a person edits */ const p = path.join(d, e.name), r = rel ? rel + '/' + e.name : e.name; if (e.isDirectory()) walk(p, r); else if (/\.(rs|toml|lock|ttf|otf|bin)$/.test(e.name)) files.push([r, p]); } };
   walk(dir, ''); files.sort((a, b) => (a[0] < b[0] ? -1 : 1));
   for (const [r, p] of files) { h.update(r + '\0'); h.update(fs.readFileSync(p)); h.update('\0'); }
   return h.digest('hex').slice(0, 16);

@@ -9,7 +9,7 @@ import * as engine from './engine.mjs';
 let lastEngineBug = null;
 const noteEngine = (e) => { if (e && e.code === 'code_error') { lastEngineBug = e; return true; } return false; };
 import { toDeck, fromDeck } from './dcmodel.mjs';
-import { readPpt, readOdp, writeOdp, soffice, findSoffice, findPowerPoint, convertLegacy } from './legacy.mjs';
+import { readPpt, readOdp, writeOdp, soffice, findSoffice, convertLegacy } from './legacy.mjs';
 
 // The DeckCraft engine (Rust->WASM, github.com/xnohat/deckcraft) is the primary file engine:
 // it opens the PowerPoint family with full fidelity and keeps the whole document model (masters,
@@ -19,12 +19,14 @@ import { readPpt, readOdp, writeOdp, soffice, findSoffice, findPowerPoint, conve
 const masterPath = (ctx, key) => path.join(ctx.userDataDir, 'engine', String(key || 'current').replace(/[^\w.-]/g, '_') + '.json');
 async function loadMaster(ctx, key) { try { return JSON.parse(await fs.readFile(masterPath(ctx, key), 'utf8')); } catch { return null; } }
 async function storeMaster(ctx, key, res) { await fs.mkdir(path.dirname(masterPath(ctx, key)), { recursive: true }); await fs.writeFile(masterPath(ctx, key), JSON.stringify(res)); }
+// fresh per-user scratch folder for LibreOffice conversions
+async function scratch(ctx) { if (!ctx?.userDataDir) return undefined; const base = path.join(ctx.userDataDir, 'convert'); await fs.mkdir(base, { recursive: true }); return fs.mkdtemp(path.join(base, 'c-')); }
 const newKey = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const ENGINE_EXT = ['pptx', 'pptm', 'potx', 'potm', 'ppsx', 'ppsm', 'deckcraft'];
 async function engineOpen(buf, ext, ctx) {
   if (!engine.engineAvailable()) return null;
   let src = buf, e2 = ext;
-  if (['ppt', 'pps', 'pot', 'odp', 'otp'].includes(ext) || (buf.readUInt32LE(0) === 0xe011cfd0 && !ENGINE_EXT.includes(ext))) { src = await convertLegacy(buf, ext, 'pptx'); e2 = 'pptx'; if (!src) return null; }
+  if (['ppt', 'pps', 'pot', 'odp', 'otp'].includes(ext) || (buf.readUInt32LE(0) === 0xe011cfd0 && !ENGINE_EXT.includes(ext))) { src = await convertLegacy(buf, ext, 'pptx', await scratch(ctx)); e2 = 'pptx'; if (!src) return null; }
   if (!ENGINE_EXT.includes(e2) && !(src[0] === 0x50 && src[1] === 0x4b)) return null;
   const res = await engine.importFile(src); const key = newKey(); await storeMaster(ctx, key, res);
   const deck = toDeck(res); deck.engineKey = key; return { deck, warnings: (res.warnings || []).slice(0, 4) };
@@ -42,7 +44,7 @@ const MIME = {
   pdf: 'application/pdf', json: 'application/json', txt: 'text/plain', rtf: 'application/rtf', png: 'image/png', jpg: 'image/jpeg',
 };
 
-async function convert(buf, name) {
+async function convert(buf, name, ctx = {}) {
   const ext = String(name).split('.').pop().toLowerCase();
   const isZip = buf[0] === 0x50 && buf[1] === 0x4b; const isCfb = buf.readUInt32LE(0) === 0xe011cfd0;
   if (OOXML.includes(ext) || (isZip && !['odp', 'otp'].includes(ext))) {
@@ -51,7 +53,7 @@ async function convert(buf, name) {
   }
   if (['odp', 'otp'].includes(ext)) return readOdp(buf);
   if (LEGACY.includes(ext) || isCfb) {
-    const conv = await convertLegacy(buf, ext === 'pps' || ext === 'pot' ? 'ppt' : ext, 'pptx');
+    const conv = await convertLegacy(buf, ext === 'pps' || ext === 'pot' ? 'ppt' : ext, 'pptx', await scratch(ctx));
     if (conv) return readPptx(conv);
     return readPpt(buf);
   }
@@ -102,13 +104,13 @@ function deckToOutline(deck) {
 const clean = (t) => String(t || 'Bản trình chiếu').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80);
 
 export const commands = {
-  async open({ fileId, name }, ctx) {
+  async openFile({ fileId, name }, ctx) {
     const p = await ctx.files.path(fileId);
     if (!p) throw bad('Không tìm thấy tệp vừa tải lên.', 'not_found');
     const buf = await fs.readFile(p); const fname = name || path.basename(p);
     const ext = fname.split('.').pop().toLowerCase(); let r = null;
     if (!['txt', 'md', 'json'].includes(ext)) { try { r = await engineOpen(buf, ext, ctx); } catch (e) { noteEngine(e); if (e.code === 'encrypted') throw bad('Tệp được bảo vệ bằng mật khẩu — hãy bỏ mật khẩu trong PowerPoint rồi mở lại.', 'encrypted'); } }
-    if (!r) r = await convert(buf, fname);
+    if (!r) r = await convert(buf, fname, ctx);
     r.deck.title = r.deck.title || fname.replace(/\.[^.]+$/, '');
     await remember(ctx, fname);
     return { name: fname, deck: r.deck, warnings: r.warnings || [], ...(lastEngineBug ? { engineBug: true } : {}) };
@@ -136,9 +138,9 @@ export const commands = {
     else if (format === 'pdf' && engine.engineAvailable() && !images?.length) { const master = deck.engineKey ? await loadMaster(ctx, deck.engineKey) : null; data = await engine.exportPdf(fromDeck(deck, master), 0); }
     else if (LEGACY.includes(format) || format === 'odp' || format === 'otp') {
       pptxBuf = (await viaEngine('pptx')) || (await writePptx(deck, 'pptx'));
-      const x = pptxBuf; data = await convertLegacy(x, 'pptx', format);
+      const x = pptxBuf; data = await convertLegacy(x, 'pptx', format, await scratch(ctx));
       if (!data && (format === 'odp' || format === 'otp')) data = await writeOdp(deck, format === 'otp');
-      if (!data) { data = x; ext = 'pptx'; warnings.push(`Không tìm thấy LibreOffice hay PowerPoint để ghi .${format} (97-2003) — đã lưu .pptx, mọi bản PowerPoint từ 2007 đều mở được.`); }
+      if (!data) { data = x; ext = 'pptx'; warnings.push(`Chưa có LibreOffice (bước cài của app sẽ tự cài) để ghi .${format} (97-2003) — đã lưu .pptx, mọi bản PowerPoint từ 2007 đều mở được.`); }
     }
     else if (format === 'pdf') { if (!images?.length) throw bad('Thiếu ảnh các slide để xuất PDF.'); data = imagesToPdf(images, deck.w || 960, deck.h || 540); }
     else if (format === 'txt' || format === 'rtf') { const o = deckToOutline(deck); data = Buffer.from(format === 'txt' ? o : `{\\rtf1\\ansi\\uc1 ${o.replace(/[\\{}]/g, (c) => '\\' + c).replace(/[^\x00-\x7f]/g, (c) => `\\u${c.charCodeAt(0)}?`).replace(/\n/g, '\\par\n')}}`, 'utf8'); }
@@ -152,13 +154,13 @@ export const commands = {
   },
 
   async renderBackdrop({ engineKey, deck, index, width, skip }, ctx) {
-    const master = engineKey ? await loadMaster(ctx, engineKey) : null; if (!master) throw bad('Không có bản gốc của engine.', 'not_found');
+    const master = engineKey ? await loadMaster(ctx, engineKey) : null; if (!master) return { png: '', missing: true }; // original gone (cleared data): the page draws without the engine backdrop
     const res = deck ? fromDeck(deck, master) : master;
     const png = await engine.renderBackdrop(res, index | 0, Math.min(3840, Math.max(64, width | 0 || 1280)), (skip || []).map(Number));
     return { png: 'data:image/png;base64,' + png.toString('base64') };
   },
 
-  async capabilities() { return { soffice: !!findSoffice() || !!findPowerPoint(), converter: findSoffice() ? 'libreoffice' : findPowerPoint() ? 'powerpoint' : null, read: [...OOXML, ...LEGACY, 'odp', 'otp', 'txt', 'md', 'json'], write: [...OOXML, ...LEGACY, 'odp', 'otp', 'pdf', 'png', 'jpg', 'txt', 'rtf'] }; },
+  async capabilities() { return { soffice: !!findSoffice(), converter: findSoffice() ? 'libreoffice' : null, read: [...OOXML, ...LEGACY, 'odp', 'otp', 'txt', 'md', 'json'], write: [...OOXML, ...LEGACY, 'odp', 'otp', 'pdf', 'png', 'jpg', 'txt', 'rtf'] }; },
 
   async recent(_a, ctx) { return { items: (await ctx.store.user.get('recent')) || [] }; },
 

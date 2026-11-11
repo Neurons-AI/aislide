@@ -10,7 +10,7 @@
   }
  },
  {
-  "command": "open",
+  "command": "openFile",
   "args": {
    "fileId": "f1",
    "name": "sample.pptx"
@@ -92,13 +92,28 @@
   "args": {}
  },
  {
-  "command": "open",
+  "command": "openFile",
   "args": {
    "fileId": "f2",
    "name": "chart.pptx"
   },
   "mock": {
    "files.path": "tests/fixtures/chart.pptx"
+  }
+ },
+ {
+  "command": "reportEngineBug",
+  "args": {}
+ },
+ {
+  "command": "renderBackdrop",
+  "args": {
+   "engineKey": "smoke-missing",
+   "index": 0
+  },
+  "expect": {
+   "png": "",
+   "missing": true
   }
  }
 ]

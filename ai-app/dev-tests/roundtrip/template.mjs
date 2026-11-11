@@ -1,7 +1,7 @@
-import fs from 'fs'; import * as E from '../../backend/engine.mjs'; import { toDeck, fromDeck } from '../../backend/dcmodel.mjs';
+import fs from 'fs'; import * as E from '../../ai-slide/backend/engine.mjs'; import { toDeck, fromDeck } from '../../ai-slide/backend/dcmodel.mjs';
 // Real-world deck round-trip. Put any large .pptx at tests/fixtures/template.pptx (not committed:
 // it is someone's document) or pass a path: node tests/roundtrip/template.mjs <file.pptx>
-const src = process.argv[2] || new URL('../fixtures/template.pptx', import.meta.url).pathname;
+const src = process.argv[2] || new URL('../../ai-slide/tests/fixtures/template.pptx', import.meta.url).pathname;
 if (!fs.existsSync(src)) { console.log('skip: no tests/fixtures/template.pptx (pass a .pptx path)'); process.exit(0); }
 const OUT = process.env.TMPDIR || '/tmp';
 const res=await E.importFile(fs.readFileSync(src)); const deck=toDeck(res);

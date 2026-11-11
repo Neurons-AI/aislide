@@ -113,12 +113,18 @@ export async function writeOdp(deck, template = false) {
 
 // ---------- LibreOffice bridge (optional) ----------
 export function findSoffice() {
-  const c = [process.env.SOFFICE, '/Applications/LibreOffice.app/Contents/MacOS/soffice', '/usr/bin/soffice', '/usr/local/bin/soffice', '/opt/homebrew/bin/soffice', 'C:\\Program Files\\LibreOffice\\program\\soffice.exe', 'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe'].filter(Boolean);
+  const home = os.homedir(), la = process.env.LOCALAPPDATA || path.join(home, 'AppData', 'Local');
+  const c = [process.env.SOFFICE,
+    '/Applications/LibreOffice.app/Contents/MacOS/soffice', path.join(home, 'Applications/LibreOffice.app/Contents/MacOS/soffice'),
+    '/usr/bin/soffice', '/usr/local/bin/soffice', '/opt/homebrew/bin/soffice', '/usr/bin/libreoffice', path.join(home, '.local/share/aicoworker/tools/libreoffice.AppImage'),
+    'C:\\Program Files\\LibreOffice\\program\\soffice.exe', 'C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe',
+    path.join(la, 'AICoworker', 'tools', 'LibreOffice', 'program', 'soffice.exe'), path.join(la, 'AICoworker', 'tools', 'LibreOffice', 'LibreOffice', 'program', 'soffice.exe')].filter(Boolean);
   return c.find((p) => { try { return fss.statSync(p).isFile(); } catch { return false; } }) || null;
 }
-export async function soffice(buf, inExt, outFilter, outExt) {
+export async function soffice(buf, inExt, outFilter, outExt, userDataDir) {
   const bin = findSoffice(); if (!bin) return null;
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'aislide-'));
+  // userDataDir = a fresh per-user scratch folder the backend made under ctx.userDataDir/convert
+  const dir = userDataDir || await fs.mkdtemp(path.join(os.tmpdir(), 'aislide-'));
   try {
     const inp = path.join(dir, `in.${inExt}`); await fs.writeFile(inp, buf);
     await new Promise((res, rej) => execFile(bin, ['--headless', '--norestore', `-env:UserInstallation=file://${dir.replace(/\\/g, '/')}/profile`, '--convert-to', outFilter, '--outdir', dir, inp], { timeout: 120000 }, (e) => (e ? rej(e) : res())));
@@ -127,44 +133,8 @@ export async function soffice(buf, inExt, outFilter, outExt) {
 }
 
 // ---------- Microsoft PowerPoint bridge (used when LibreOffice is absent) ----------
-// macOS: AppleScript "save as"; Windows: PowerPoint COM through PowerShell. Same fidelity as PowerPoint itself.
-const PP_MAC = '/Applications/Microsoft PowerPoint.app';
-export function findPowerPoint() {
-  if (process.platform === 'darwin') return fss.existsSync(PP_MAC) ? 'mac' : null;
-  if (process.platform === 'win32') { const pf = [process.env.ProgramFiles, process.env['ProgramFiles(x86)']].filter(Boolean); for (const b of pf) for (const v of ['Office16', 'Office15', 'Office14', 'root\\Office16']) { if (fss.existsSync(path.join(b, 'Microsoft Office', v, 'POWERPNT.EXE'))) return 'win'; } }
-  return null;
-}
-// PowerPoint save-as codes (PpSaveAsFileType). macOS AppleScript uses the same names.
-const PP_FMT = { pptx: ['save as Open XML presentation', 24], ppt: ['save as presentation', 1], pps: ['save as show', 7], pot: ['save as template', 5], pptm: ['save as Open XML presentation macro enabled', 25], ppsx: ['save as Open XML show', 28], potx: ['save as Open XML template', 26] };
-export async function powerpoint(buf, inExt, outExt) {
-  const kind = findPowerPoint(); if (!kind || !PP_FMT[outExt]) return null;
-  // PowerPoint for Mac is sandboxed: work inside ~/Library/Containers/.../Data/tmp
-  const base = kind === 'mac' ? path.join(os.homedir(), 'Library/Containers/com.microsoft.Powerpoint/Data/tmp') : os.tmpdir();
-  await fs.mkdir(base, { recursive: true }); const dir = await fs.mkdtemp(path.join(base, 'aislide-'));
-  const inp = path.join(dir, `in.${inExt}`), outp = path.join(dir, `out.${outExt}`);
-  try {
-    await fs.writeFile(inp, buf);
-    if (kind === 'mac') {
-      const script = `with timeout of 180 seconds
-tell application "Microsoft PowerPoint"
-  set wasRunning to running
-  open POSIX file "${inp}"
-  set p to active presentation
-  save p in POSIX file "${outp}" as ${PP_FMT[outExt][0]}
-  close p saving no
-  if not wasRunning and (count of presentations) is 0 then quit
-end tell
-end timeout`;
-      await new Promise((res, rej) => execFile('osascript', ['-e', script], { timeout: 200000 }, (e, o, er) => (e ? rej(new Error(er || e.message)) : res())));
-    } else {
-      const ps = `$pp = New-Object -ComObject PowerPoint.Application; $p = $pp.Presentations.Open('${inp}', $true, $false, $false); $p.SaveAs('${outp}', ${PP_FMT[outExt][1]}); $p.Close(); if ($pp.Presentations.Count -eq 0) { $pp.Quit() }`;
-      await new Promise((res, rej) => execFile('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { timeout: 200000 }, (e, o, er) => (e ? rej(new Error(er || e.message)) : res())));
-    }
-    return await fs.readFile(outp);
-  } catch { return null; } finally { fs.rm(dir, { recursive: true, force: true }).catch(() => {}); }
-}
-// best available converter: LibreOffice first (headless, no UI), then PowerPoint
-export async function convertLegacy(buf, inExt, outExt) {
+// legacy 97-2003 formats go through LibreOffice (headless); setup installs it (scripts/install-tools.mjs)
+export async function convertLegacy(buf, inExt, outExt, workDir) {
   const filter = outExt === 'pptx' ? 'pptx' : outExt === 'ppt' ? 'ppt:MS PowerPoint 97' : outExt === 'pps' ? 'pps:MS PowerPoint 97 AutoPlay' : outExt === 'pot' ? 'pot:MS PowerPoint 97 Vorlage' : outExt;
-  return (await soffice(buf, inExt, filter, outExt)) || (await powerpoint(buf, inExt, outExt));
+  return await soffice(buf, inExt, filter, outExt, workDir);
 }

@@ -1,2 +1,13 @@
-{ "name": "ai-slide-backend", "private": true, "type": "module",
-  "dependencies": { "jszip": "^3.10.1", "@xmldom/xmldom": "^0.8.10", "cfb": "^1.2.2" } }
+{
+  "name": "ai-slide-backend",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "@xmldom/xmldom": "^0.8.10",
+    "cfb": "^1.2.2"
+  },
+  "scripts": {
+    "setup-tools": "node scripts/install-tools.mjs"
+  }
+}

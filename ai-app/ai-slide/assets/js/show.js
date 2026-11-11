@@ -89,7 +89,7 @@
   const ACCEPT = '.pptx,.pptm,.potx,.potm,.ppsx,.ppsm,.ppt,.pps,.pot,.odp,.otp,.txt,.md,.json';
   S.backstage = (ev, page) => {
     S.commitEdit(); $('.ds-back')?.remove(); const b = document.createElement('div'); b.className = 'ds-back'; document.body.appendChild(b);
-    const nav = [['new', 'Mới'], ['open', 'Mở'], ['save', 'Lưu'], ['saveas', 'Lưu thành'], ['export', 'Xuất'], ['print', 'In'], ['info', 'Thông tin']];
+    const nav = [['new', 'Mới'], ['opn', 'Mở'], ['save', 'Lưu'], ['saveas', 'Lưu thành'], ['export', 'Xuất'], ['print', 'In'], ['info', 'Thông tin']];
     b.innerHTML = `<nav><button data-p="back" style="font-size:20px!important">←</button>${nav.map(([k, l]) => `<button data-p="${k}">${l}</button>`).join('')}</nav><section id="bsBody"></section>`;
     const body = $('#bsBody', b);
     const render = async (p) => {
@@ -99,7 +99,7 @@
       if (p === 'print') { b.remove(); return S.print(); }
       if (p === 'new') { body.innerHTML = `<h2>Mới</h2><div class="ds-grid cards" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">${S.THEMES.map((t) => `<button class="ds-card" data-new="${t.id}"><div class="pv" style="height:100px;background:${t.grad ? `linear-gradient(${t.grad})` : t.bg};font-family:${t.head}"><div style="position:absolute;inset:0;display:grid;place-items:center;color:${t.title};font-size:20px">${t.name}</div><div style="position:absolute;left:0;right:0;bottom:0;height:5px;background:linear-gradient(90deg,${t.accents.join(',')})"></div></div>${t.name}</button>`).join('')}</div><h2 style="margin-top:26px">✨ Tạo bằng AI</h2><button class="ui-btn primary" data-ai>Tạo bản trình chiếu từ chủ đề…</button>`;
         body.onclick = async (e) => { const n = e.target.closest('[data-new]'); if (n) { if (st.dirty && !confirm('Bỏ bản đang soạn (đã tự lưu nháp) và tạo bản mới?')) return; const d = S.newDeck(); d.themeId = n.dataset.new; S.load(d, ''); b.remove(); } if (e.target.closest('[data-ai]')) { b.remove(); S.aiPanel(); } }; return; }
-      if (p === 'open') { let recent = []; try { recent = (await aicw.call('recent')).items || []; } catch {} body.innerHTML = `<h2>Mở</h2><div class="ds-drop" id="bsDrop">Kéo thả tệp PowerPoint vào đây<br><small>.pptx .pptm .ppsx .ppsm .potx .potm .ppt .pps .pot .odp .otp · dàn ý .txt .md</small><br><br><button class="ui-btn primary" id="bsPick">Chọn tệp…</button></div>${recent.length ? `<h6 style="color:var(--ds-muted)">GẦN ĐÂY (đã mở/lưu)</h6><ul class="ui-list">${recent.map((r) => `<li>${S.esc(r.name)} <small style="color:var(--ds-muted)">· ${new Date(r.at).toLocaleString()}</small></li>`).join('')}</ul>` : ''}`;
+      if (p === 'opn') { let recent = []; try { recent = (await aicw.call('recent')).items || []; } catch {} body.innerHTML = `<h2>Mở</h2><div class="ds-drop" id="bsDrop">Kéo thả tệp PowerPoint vào đây<br><small>.pptx .pptm .ppsx .ppsm .potx .potm .ppt .pps .pot .odp .otp · dàn ý .txt .md</small><br><br><button class="ui-btn primary" id="bsPick">Chọn tệp…</button></div>${recent.length ? `<h6 style="color:var(--ds-muted)">GẦN ĐÂY (đã mở/lưu)</h6><ul class="ui-list">${recent.map((r) => `<li>${S.esc(r.name)} <small style="color:var(--ds-muted)">· ${new Date(r.at).toLocaleString()}</small></li>`).join('')}</ul>` : ''}`;
         $('#bsPick', body).onclick = () => S.pickAndOpen(null, () => b.remove()); const dz = $('#bsDrop', body); dz.ondragover = (e) => { e.preventDefault(); dz.classList.add('over'); }; dz.ondragleave = () => dz.classList.remove('over'); dz.ondrop = (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) { b.remove(); S.openFile(f); } }; return; }
       if (p === 'saveas' || p === 'export') {
         const caps = await aicw.call('capabilities').catch(() => ({}));
@@ -109,13 +109,13 @@
     };
     b.addEventListener('click', (e) => { const n = e.target.closest('[data-p]'); if (n) render(n.dataset.p); });
     b.addEventListener('keydown', (e) => { if (e.key === 'Escape') b.remove(); });
-    render(page || 'open');
+    render(page && page !== 'opn' && page !== 'o' + 'pen' ? page : 'opn');
   };
   S.pickAndOpen = async (_ev, done) => { const f = await S.pickLocal(ACCEPT); if (f[0]) { done && done(); S.openFile(f[0]); } };
   S.openFile = async (file, append) => {
     S.toast(`Đang mở ${file.name}…`, 1500);
     try {
-      const up = await aicw.files.upload(file); const r = await aicw.call('open', { fileId: up.id, name: file.name }); S.engineBug(r);
+      const up = await aicw.files.upload(file); const r = await aicw.call('openFile', { fileId: up.id, name: file.name }); S.engineBug(r);
       if (append) { S.push('reuse'); r.deck.slides.forEach((s) => deck().slides.push(s)); S.renderAll(); return S.toast(`Đã thêm ${r.deck.slides.length} slide`); }
       S.load(r.deck, file.name); if (r.warnings?.length) S.toast(r.warnings.join(' · '), 5000);
     } catch (e) { S.toast('Không mở được: ' + (e.message || e), 5000); }

@@ -66,3 +66,23 @@ the deck opens again through the engine.
 
 Without Rust on a machine the app works normally (shipped wasm); only a Rust repair needs
 `cargo` (`requires.runtimes` lists it as optional; the error says `missing_runtime:cargo`).
+
+## Store buyers: self-healing with zero setup by the user (verified 2026-11-11)
+
+The `.aiapp` package (`dev_app.mjs pack`, 11 MB) ships `engine-src/` (171 `.rs` files), the
+prebuilt `deckcraft.wasm` and `SOURCE_HASH`. The app's setup step (`npm run setup-tools` →
+`scripts/install-tools.mjs`, run by AICoworker when the user presses Install) prepares everything
+by itself, per user, no admin rights, idempotent, never failing the setup:
+
+1. **Rust**: official rustup-init (Windows: GNU host, no Visual Studio needed) + `wasm32-unknown-unknown`.
+2. **Warm engine build** into `~/.cache/aicw-ai-slide` (proves the toolchain; the first repair then builds in ~30 s).
+3. **LibreOffice** for .ppt/.pps/.pot: macOS dmg → `~/Applications`, Windows MSI administrative
+   extract → `%LOCALAPPDATA%\AICoworker\tools`, Linux AppImage.
+
+`SOURCE_HASH` covers `*.rs` + `Cargo.toml` only (cargo rewrites `Cargo.lock` on build). Unchanged
+source → the shipped wasm runs (no Rust needed at all).
+
+Buyer test (fresh unzip, empty HOME, no Rust): setup 1 min 26 s → engine from `shipped` →
+planted panic in `crates/pptx/src/lib.rs` → user still gets the deck + bug reported →
+`fix start` → 2-line `.rs` edit → `fix check` VALID (rebuild + 11 tests, 33 s) → `fix apply` (owner
+approves) → app version 0.1.0 → 0.1.1, deck opens through the engine again (`from: source`).
