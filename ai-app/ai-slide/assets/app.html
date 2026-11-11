@@ -1,0 +1,16 @@
+<div id="app-root"></div>
+<div id="ds-media-picker" data-media-picker="image" style="display:none"></div>
+<script>
+(async function () {
+  for (let i = 0; i < 200 && !(window.Slide && window.Slide.designIdeas && window.Slide.mount); i++) await new Promise((r) => setTimeout(r, 50));
+  const S = window.Slide;
+  try { await Promise.race([aicw.ready(), new Promise((r) => setTimeout(r, 1500))]); } catch (e) {}
+  S.mount(document.getElementById("app-root"));
+  S.initLang();
+  try { const st = aicw.getState && aicw.getState(); if (st && st.theme) document.documentElement.setAttribute('data-theme', st.theme); } catch (e) {}
+  let loaded = false;
+  try { const r = await aicw.call('loadDraft'); if (r && r.deck && Array.isArray(r.deck.slides) && r.deck.slides.length) { S.load(r.deck, ''); loaded = true; } } catch (e) {}
+  if (!loaded) S.renderAll();
+  window.addEventListener('beforeunload', () => { try { S.commitEdit(); S.autosave(); } catch (e) {} });
+})();
+</script>

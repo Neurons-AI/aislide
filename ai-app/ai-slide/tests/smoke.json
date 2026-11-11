@@ -1,0 +1,104 @@
+[
+ {
+  "command": "capabilities",
+  "args": {}
+ },
+ {
+  "command": "fromOutline",
+  "args": {
+   "text": "Giới thiệu\n- Một\n- Hai\nKết"
+  }
+ },
+ {
+  "command": "open",
+  "args": {
+   "fileId": "f1",
+   "name": "sample.pptx"
+  },
+  "mock": {
+   "files.path": "tests/fixtures/sample.pptx"
+  }
+ },
+ {
+  "command": "save",
+  "args": {
+   "format": "pptx",
+   "deck": {
+    "title": "Thử",
+    "w": 960,
+    "h": 540,
+    "slides": [
+     {
+      "els": [
+       {
+        "id": "a",
+        "type": "text",
+        "x": 10,
+        "y": 10,
+        "w": 300,
+        "h": 50,
+        "text": {
+         "size": 20,
+         "paras": [
+          {
+           "runs": [
+            {
+             "t": "Xin chào"
+            }
+           ]
+          }
+         ]
+        }
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ {
+  "command": "save",
+  "args": {
+   "format": "odp",
+   "deck": {
+    "title": "Thử",
+    "slides": [
+     {
+      "els": []
+     }
+    ]
+   }
+  }
+ },
+ {
+  "command": "saveDraft",
+  "args": {
+   "deck": {
+    "title": "x",
+    "slides": [
+     {
+      "els": []
+     }
+    ]
+   }
+  }
+ },
+ {
+  "command": "loadDraft",
+  "args": {}
+ },
+ {
+  "command": "recent",
+  "args": {}
+ },
+ {
+  "command": "open",
+  "args": {
+   "fileId": "f2",
+   "name": "chart.pptx"
+  },
+  "mock": {
+   "files.path": "tests/fixtures/chart.pptx"
+  }
+ }
+]

@@ -1,0 +1,360 @@
+{
+  "schema": "aicw.app.v1",
+  "name": "AI Slide",
+  "icon": "📽️",
+  "version": "0.1.0",
+  "description": "Trình chiếu giống MS PowerPoint, có AI tạo slide — engine DeckCraft (Rust/WASM) — mở/lưu pptx, pptm, ppsx, ppsm, potx, potm, ppt, pps, pot, odp, otp; xuất PDF, PNG, JPG, GIF.",
+  "window": {
+    "entry": "assets/app.html",
+    "style": "clean",
+    "session": "dedicated",
+    "libs": [
+      "aicw-app",
+      "skill:ai-slide/css/app.css",
+      "skill:ai-slide/js/i18n.js",
+      "skill:ai-slide/js/render.js",
+      "skill:ai-slide/js/editor.js",
+      "skill:ai-slide/js/commands.js",
+      "skill:ai-slide/js/show.js"
+    ]
+  },
+  "backend": {
+    "runtime": "node",
+    "entry": "backend/main.mjs",
+    "commands": {
+      "open": {
+        "description": "Mở tệp đã tải lên (pptx, pptm, ppsx, ppsm, potx, potm, ppt, pps, pot, odp, otp, txt/md dàn ý, json) và trả về bản trình chiếu để soạn.",
+        "args": {
+          "type": "object",
+          "required": [
+            "fileId"
+          ],
+          "properties": {
+            "fileId": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "required": [
+            "deck"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "deck": {
+              "type": "object"
+            },
+            "warnings": {
+              "type": "array"
+            },
+            "engineBug": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "fromOutline": {
+        "description": "Tạo slide từ dàn ý văn bản (dòng không thụt = tiêu đề slide, '-' = gạch đầu dòng).",
+        "agent": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "text"
+          ],
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "required": [
+            "deck"
+          ],
+          "properties": {
+            "deck": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "save": {
+        "description": "Lưu bản trình chiếu ra tệp (pptx, pptm, potx, potm, ppsx, ppsm, ppt, pps, pot, odp, otp, pdf, rtf, txt, json) và trả về link tải.",
+        "mutating": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "format",
+            "deck"
+          ],
+          "properties": {
+            "format": {
+              "type": "string",
+              "enum": [
+                "pptx",
+                "pptm",
+                "potx",
+                "potm",
+                "ppsx",
+                "ppsm",
+                "ppt",
+                "pps",
+                "pot",
+                "odp",
+                "otp",
+                "pdf",
+                "rtf",
+                "txt",
+                "json",
+                "deckcraft"
+              ]
+            },
+            "deck": {
+              "type": "object"
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "required": [
+            "id",
+            "url",
+            "name"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "number"
+            },
+            "warnings": {
+              "type": "array"
+            },
+            "engineBug": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "capabilities": {
+        "description": "Định dạng đọc/ghi được trên máy này (có LibreOffice không).",
+        "args": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "output": {
+          "type": "object",
+          "required": [
+            "read",
+            "write"
+          ],
+          "properties": {
+            "soffice": {
+              "type": "boolean"
+            },
+            "read": {
+              "type": "array"
+            },
+            "write": {
+              "type": "array"
+            }
+          }
+        }
+      },
+      "recent": {
+        "description": "Danh sách tệp gần đây của người dùng.",
+        "args": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "output": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "items": {
+              "type": "array"
+            }
+          }
+        }
+      },
+      "saveDraft": {
+        "description": "Tự lưu bản đang soạn.",
+        "mutating": true,
+        "args": {
+          "type": "object",
+          "required": [
+            "deck"
+          ],
+          "properties": {
+            "deck": {
+              "type": "object"
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "ok": {
+              "type": "boolean"
+            },
+            "at": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "loadDraft": {
+        "description": "Lấy bản tự lưu gần nhất.",
+        "args": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "output": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "deck": {}
+          }
+        }
+      },
+      "renderBackdrop": {
+        "description": "Vẽ nền của một slide bằng engine DeckCraft (WASM): nền, master/layout và mọi hình chưa sửa trực tiếp được; bỏ qua các hình trong skip.",
+        "args": {
+          "type": "object",
+          "required": [
+            "engineKey",
+            "index"
+          ],
+          "properties": {
+            "engineKey": {
+              "type": "string"
+            },
+            "index": {
+              "type": "number"
+            },
+            "width": {
+              "type": "number"
+            },
+            "skip": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "deck": {
+              "type": "object"
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "required": [
+            "png"
+          ],
+          "properties": {
+            "png": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "reportEngineBug": {
+        "description": "Báo lỗi code của engine Rust (panic / không biên dịch được) cho AICoworker để tự sửa; người dùng đã nhận kết quả dự phòng.",
+        "args": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "output": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "ok": {
+              "type": "boolean"
+            }
+          }
+        },
+        "heal": false
+      }
+    }
+  },
+  "permissions": {
+    "llm": true,
+    "agent": false,
+    "host": [
+      "image"
+    ],
+    "schedule": false
+  },
+  "secrets": [],
+  "requires": {
+    "aicoworker": ">=2026.8.5",
+    "runtimes": [
+      {
+        "id": "soffice",
+        "required": false
+      },
+      {
+        "id": "cargo",
+        "required": false
+      }
+    ]
+  },
+  "ai": {
+    "model": {
+      "recommended": "anthropic/claude-sonnet-4-6",
+      "alternatives": [
+        "local-llm/gemma-4-e2b"
+      ],
+      "note": "Tạo dàn ý cả bộ slide và viết lại chữ cần model viết tốt; model nhỏ vẫn chạy được các việc ngắn."
+    },
+    "image": {
+      "recommended": "local",
+      "alternatives": [
+        "gemini",
+        "gpt",
+        "grok",
+        "token"
+      ]
+    }
+  },
+  "setup": {
+    "install": [
+      {
+        "kind": "npm"
+      }
+    ],
+    "health": {
+      "ready": {
+        "command": "capabilities"
+      }
+    }
+  }
+}

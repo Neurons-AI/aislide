@@ -14,6 +14,40 @@ thread_local! {
     static OUT: RefCell<(bool, Vec<u8>)> = const { RefCell::new((true, Vec::new())) };
 }
 
+/// Last Rust panic ("message @ file:line:col"). On wasm32-unknown-unknown a panic aborts as an
+/// `unreachable` trap; the hook writes here first, so the host can read it after the trap with
+/// `dc_last_panic` and report the bug with the exact Rust source location (self-healing).
+static LAST_PANIC: std::sync::Mutex<Vec<u8>> = std::sync::Mutex::new(Vec::new());
+
+fn install_panic_hook() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        std::panic::set_hook(Box::new(|info| {
+            let msg = info.payload().downcast_ref::<&str>().map(|s| (*s).to_string()).or_else(|| info.payload().downcast_ref::<String>().cloned()).unwrap_or_else(|| "panic".into());
+            let at = info.location().map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column())).unwrap_or_default();
+            if let Ok(mut g) = LAST_PANIC.lock() {
+                *g = format!("{msg} @ {at}").into_bytes();
+            }
+        }));
+    });
+}
+
+/// After a trap: the panic text recorded by the hook (empty when the trap was not a panic).
+#[unsafe(no_mangle)]
+pub extern "C" fn dc_last_panic() -> u32 {
+    let v = LAST_PANIC.lock().map(|g| g.clone()).unwrap_or_default();
+    set(Ok(v))
+}
+
+/// Test hook for the self-healing path: panics on purpose (never called by the app).
+#[unsafe(no_mangle)]
+pub extern "C" fn dc_selftest_panic() -> u32 {
+    install_panic_hook();
+    let v: Vec<u8> = Vec::new();
+    #[allow(clippy::indexing_slicing)]
+    set(Ok(vec![v[usize::from(v.is_empty())]]))
+}
+
 fn set(r: Result<Vec<u8>, String>) -> u32 {
     OUT.with(|o| {
         let mut o = o.borrow_mut();
@@ -39,6 +73,7 @@ unsafe fn input<'a>(ptr: *const u8, len: usize) -> &'a [u8] {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn dc_alloc(len: usize) -> *mut u8 {
+    install_panic_hook();
     let mut v = Vec::<u8>::with_capacity(len.max(1));
     let p = v.as_mut_ptr();
     std::mem::forget(v);
