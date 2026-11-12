@@ -16,3 +16,5 @@ ai-app/ai-slide/tests/fixtures/template.pptx
 ai-app/ai-slide/engine-src/
 ai-app/ai-slide/backend/engine/deckcraft.wasm
 ai-app/ai-slide/node_modules/
+ai-app/ai-slide/dist-pack/
+ai-app/ai-slide/.aicw-fix/

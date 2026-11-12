@@ -8,7 +8,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="${1:-$HOME/aicoworker/openclaw/workspace-main/skills/ai-slide}"
-rsync -a --exclude node_modules --exclude .aicw-fix --exclude .aicw-dev --exclude engine-src \
+rsync -a --exclude node_modules --exclude .aicw-fix --exclude .aicw-dev --exclude engine-src --exclude dist-pack \
   --exclude backend/engine/deckcraft.wasm --exclude tests/fixtures/template.pptx "$SRC/" "$ROOT/ai-app/ai-slide/"
 (cd "$SRC/engine-src" && find crates -name '*.rs') | while read -r f; do
   if [ ! -f "$ROOT/$f" ]; then
