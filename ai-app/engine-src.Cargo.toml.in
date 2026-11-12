@@ -1,4 +1,4 @@
-# DeckCraft engine as used by the AI Slide app (subset of github.com/xnohat/deckcraft).
+# DeckCraft engine as used by the AI Slide app (subset of github.com/xnohat/ai-slide).
 # Edit crates/*/src, the app rebuilds deckcraft.wasm by itself (see ../ENGINE-REPAIR.md).
 [workspace]
 resolver = "3"

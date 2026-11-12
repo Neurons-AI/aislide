@@ -2,7 +2,7 @@
 // REPAIRING A BUG THAT POINTS HERE: the bug is almost always in the Rust source named in the
 // error (engine-src/crates/<crate>/src/<file>.rs:<line>), not in this file. Read ../ENGINE-REPAIR.md,
 // fix the .rs in your copy; this loader rebuilds the wasm from engine-src by itself.
-// Source: github.com/xnohat/deckcraft, crate crates/wasm-core (C ABI, JSON in/out).
+// Source: github.com/xnohat/ai-slide, crate crates/wasm-core (C ABI, JSON in/out).
 // Build/refresh the .wasm: projects/deckcraft/scripts/build-ai-slide-engine.sh
 import fs from 'node:fs';
 import path from 'node:path';
