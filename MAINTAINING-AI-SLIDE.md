@@ -1,6 +1,6 @@
 # DeckCraft fork for AI Slide
 
-This fork (`github.com/xnohat/ai-slide`, branch **`main`**) is the file and render engine
+This fork (`github.com/xnohat/aislide`, branch **`main`**) is the file and render engine
 of the **AI Slide** AI App (AICoworker, `skills/ai-slide`). Upstream: `storytold/deckcraft`.
 
 ## What the fork adds

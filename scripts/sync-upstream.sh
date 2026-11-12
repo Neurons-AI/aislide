@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Keep the fork (xnohat/ai-slide, branch main) current with storytold/deckcraft.
+# Keep the fork (xnohat/aislide, branch main) current with storytold/deckcraft.
 #   scripts/sync-upstream.sh            # check only: prints how far behind we are
 #   scripts/sync-upstream.sh --apply    # merge upstream/main into ai-slide, build, test, push
 # Exit 0 = up to date or merged cleanly; 2 = conflicts (left for a human, nothing pushed); 3 = build/test failed.

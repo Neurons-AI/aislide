@@ -53,7 +53,7 @@ Rules that matter here (on top of R1–R8 in app-creator `repair.md`):
 
 ## Upstream
 
-`engine-src/` is a subset of https://github.com/xnohat/ai-slide (fork of storytold/deckcraft),
+`engine-src/` is a subset of https://github.com/xnohat/aislide (fork of storytold/deckcraft),
 path `ai-app/` holds this app. After the owner applies a fix, it is carried back to the fork with
 `scripts/pull-ai-slide.sh` there (commits the changed crates + app files) and offered upstream as a
 pull request when it is a real DeckCraft bug.
