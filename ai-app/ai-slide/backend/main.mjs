@@ -162,7 +162,7 @@ export const commands = {
   },
 
   // Google Fonts: catalog for the font picker, and the files of one family for the page
-  async fontList({ query, vi, limit }) { const all = await gfonts.list(); const q = String(query || '').toLowerCase(); let r = all.filter((f) => (!q || f.family.toLowerCase().includes(q)) && (!vi || f.vi)); return { total: r.length, items: r.slice(0, Math.min(5000, limit || 200)).map(({ family, category, vi: v }) => ({ family, category, vi: v })) }; },
+  async fontList({ query, vi, limit, category }) { const all = await gfonts.list(); const q = String(query || '').toLowerCase(); const cat = String(category || '').toLowerCase(); let r = all.filter((f) => (!q || f.family.toLowerCase().includes(q)) && (!vi || f.vi) && (!cat || String(f.category).toLowerCase() === cat)); return { total: r.length, items: r.slice(0, Math.min(5000, limit || 200)).map(({ family, category, vi: v }) => ({ family, category, vi: v })) }; },
   async fontFaces({ family }) { return { family, faces: await gfonts.faces(family) }; },
   async capabilities() { return { soffice: !!findSoffice(), converter: findSoffice() ? 'libreoffice' : null, read: [...OOXML, ...LEGACY, 'odp', 'otp', 'txt', 'md', 'json'], write: [...OOXML, ...LEGACY, 'odp', 'otp', 'pdf', 'png', 'jpg', 'txt', 'rtf'] }; },
 

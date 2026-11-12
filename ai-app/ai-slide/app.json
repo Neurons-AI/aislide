@@ -321,6 +321,9 @@
             },
             "limit": {
               "type": "number"
+            },
+            "category": {
+              "type": "string"
             }
           }
         },

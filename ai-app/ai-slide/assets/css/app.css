@@ -161,3 +161,10 @@ body { overflow: hidden; }
 .ds-fontpick .fp-row{display:flex;width:100%;align-items:baseline;justify-content:space-between;gap:8px;border:0;background:none;color:inherit;padding:6px 8px;border-radius:6px;font-size:16px;cursor:pointer;text-align:left}
 .ds-fontpick .fp-row:hover{background:var(--ds-hover,rgba(0,0,0,.06))}
 .ds-fontpick .fp-row small{font:11px system-ui;color:var(--ds-muted);white-space:nowrap}
+
+.ds-fontpick .fp-cats{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 0}
+.ds-fontpick .fp-cats button{border:1px solid var(--ds-line);background:none;color:inherit;border-radius:12px;padding:2px 9px;font:12px system-ui;cursor:pointer}
+.ds-fontpick .fp-cats button.on{background:var(--ds-accent,#e8591a);border-color:transparent;color:#fff}
+.ds-fontpick .fp-row small.ok{color:#2e9d6a;font-weight:700}.ds-fontpick .fp-row small.bad{color:#d6455d;font-weight:700}
+.ds-fontstatus{display:inline-flex;align-items:center;gap:6px;color:var(--ds-muted);max-width:46vw;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ds-fontstatus .spin{display:inline-block;animation:dsspin 1s linear infinite}@keyframes dsspin{to{transform:rotate(360deg)}}

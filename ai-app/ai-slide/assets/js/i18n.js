@@ -490,7 +490,15 @@ Chỉ phông có tiếng Việt|Only fonts with Vietnamese|仅含越南语的字
 Gần đây|Recent|最近使用|最近使用|최근
 Trên máy này|On this computer|本机字体|このコンピューター|이 컴퓨터
 Không tìm thấy|No results|未找到|見つかりません|결과 없음
-Đang tải…|Loading…|加载中…|読み込み中…|불러오는 중…`;
+Đang tải…|Loading…|加载中…|読み込み中…|불러오는 중…
+Tất cả|All|全部|すべて|전체
+Viết tay|Handwriting|手写|手書き|손글씨
+Tải lỗi — bấm để thử lại|Download failed — click to retry|下载失败 — 点击重试|ダウンロード失敗 — クリックで再試行|다운로드 실패 — 클릭해 재시도
+Đang tải phông|Downloading fonts|正在下载字体|フォントをダウンロード中|글꼴 다운로드 중
+Chưa tải được phông|Fonts not downloaded|字体未能下载|フォントを取得できません|글꼴을 받지 못함
+Tải lại|Retry|重试|再試行|다시 시도
+Không có trên Google Fonts — PowerPoint/PDF sẽ dùng phông thay thế|Not on Google Fonts — PowerPoint/PDF will substitute a font|不在 Google Fonts 上 — 将使用替代字体|Google Fonts にありません — 代替フォントを使用|Google Fonts에 없음 — 대체 글꼴 사용
+Thiếu|Missing|缺少|不足|없음`;
   const L = ['vi', 'en', 'zh', 'ja', 'ko'];
   const DICT = {}; for (const line of RAW.split('\n')) { const p = line.split('|'); if (p.length < 5) continue; if (!DICT[p[0]]) DICT[p[0]] = p; }
   const KEYS = Object.keys(DICT).filter((k) => k.length >= 3).sort((a, b) => b.length - a.length);
