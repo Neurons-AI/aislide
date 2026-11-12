@@ -12,7 +12,7 @@ const noteEngine = (e) => { if (e && e.code === 'code_error') { lastEngineBug = 
 import { toDeck, fromDeck } from './dcmodel.mjs';
 import { readPpt, readOdp, writeOdp, soffice, findSoffice, convertLegacy } from './legacy.mjs';
 
-// The DeckCraft engine (Rust->WASM, github.com/xnohat/aislide) is the primary file engine:
+// The DeckCraft engine (Rust->WASM, github.com/Neurons-AI/aislide) is the primary file engine:
 // it opens the PowerPoint family with full fidelity and keeps the whole document model (masters,
 // themes, SmartArt, effects…) as the "master copy" in the user's data folder. The page edits a
 // lighter deck; saving merges the edits back into the master copy and the engine writes the file.
