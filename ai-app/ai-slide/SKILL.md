@@ -27,3 +27,7 @@ compiled to WebAssembly (`backend/engine/deckcraft.wasm`). Its full source is in
 When a bug points into `engine-src/…/*.rs` (a Rust panic or compile error), fix the **Rust
 source**, never the `.wasm`: the app rebuilds the engine from source by itself. Read
 `ENGINE-REPAIR.md` first, check your copy with `node scripts/engine-check.mjs`.
+
+## Commands (`app` `call`, id `app-ai-slide`)
+
+- `openFile` {fileId,name} → deck · `fromOutline` {text,title} → deck (dòng không thụt = tiêu đề slide, `-` = gạch đầu dòng) · `save` {format: pptx|ppt|potx|ppsx|odp|pdf|txt|json…, deck} → link tải · `capabilities` (định dạng máy này làm được) · `recent` · `saveDraft`/`loadDraft` · `renderBackdrop` · `fontList`/`fontFaces`. `reportEngineBug` là của trang.
