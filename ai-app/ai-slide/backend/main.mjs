@@ -106,7 +106,7 @@ const clean = (t) => String(t || 'Bản trình chiếu').replace(/[\\/:*?"<>|]+/
 
 export const commands = {
   async openFile({ fileId, name }, ctx) {
-    const p = await ctx.files.path(fileId);
+    let p = null; try { p = await ctx.files.path(fileId); } catch { p = null; }
     if (!p) throw bad('Không tìm thấy tệp vừa tải lên.', 'not_found');
     const buf = await fs.readFile(p); const fname = name || path.basename(p);
     const ext = fname.split('.').pop().toLowerCase(); let r = null;
