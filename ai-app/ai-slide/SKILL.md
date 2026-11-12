@@ -28,6 +28,10 @@ When a bug points into `engine-src/…/*.rs` (a Rust panic or compile error), fi
 source**, never the `.wasm`: the app rebuilds the engine from source by itself. Read
 `ENGINE-REPAIR.md` first, check your copy with `node scripts/engine-check.mjs`.
 
+Running the app needs none of the build tools: the engine ships compiled. Only before a Rust repair
+(or for a LibreOffice conversion the person asked for) install them once, in the background:
+`npm run -s setup-tools` (Rust + the wasm target, LibreOffice; can take a long while).
+
 ## Commands (`app` `call`, id `app-ai-slide`)
 
 - `openFile` {fileId,name} → deck · `fromOutline` {text,title} → deck (dòng không thụt = tiêu đề slide, `-` = gạch đầu dòng) · `save` {format: pptx|ppt|potx|ppsx|odp|pdf|txt|json…, deck} → link tải · `capabilities` (định dạng máy này làm được) · `recent` · `saveDraft`/`loadDraft` · `renderBackdrop` · `fontList`/`fontFaces`. `reportEngineBug` là của trang.

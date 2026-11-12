@@ -416,11 +416,6 @@
     "install": [
       {
         "kind": "npm"
-      },
-      {
-        "kind": "command",
-        "command": "npm run -s setup-tools",
-        "timeoutMs": 3600000
       }
     ],
     "health": {
