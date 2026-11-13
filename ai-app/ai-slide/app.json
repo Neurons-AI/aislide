@@ -2,7 +2,7 @@
   "schema": "aicw.app.v1",
   "name": "AI Slide",
   "icon": "📽️",
-  "version": "0.1.1",
+  "version": "1.0.2",
   "description": "Trình chiếu giống MS PowerPoint, có AI tạo slide — engine DeckCraft (Rust/WASM) — mở/lưu pptx, pptm, ppsx, ppsm, potx, potm, ppt, pps, pot, odp, otp; xuất PDF, PNG, JPG, GIF.",
   "window": {
     "entry": "assets/app.html",
