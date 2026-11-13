@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Build engine-src (this copy) to wasm and run the engine smoke: open → re-export a PPTX, panic hook works.
 //   node scripts/engine-check.mjs [--test]   (--test also runs `cargo test` for the crates you changed)
-import path from 'node:path'; import fs from 'node:fs'; import { spawnSync } from 'node:child_process'; import { fileURLToPath } from 'node:url';
+import path from 'node:path'; import fs from 'node:fs'; import { spawnSync } from 'node:child_process'; import { fileURLToPath, pathToFileURL } from 'node:url';
 const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const E = await import(path.join(APP, 'backend', 'engine.mjs'));
+const E = await import(pathToFileURL(path.join(APP, 'backend', 'engine.mjs')).href);
 const t0 = Date.now(); const w = E.resolveWasm();
 console.log(`engine: ${w.from}${w.hash ? ' ' + w.hash : ''}${w.cached === false ? ' (built ' + Math.round((Date.now() - t0) / 1000) + 's)' : ''}`);
 const fx = ['chart.pptx', 'sample.pptx', 'template.pptx'].map((f) => path.join(APP, 'tests', 'fixtures', f)).filter((f) => fs.existsSync(f));
