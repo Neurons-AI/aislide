@@ -215,13 +215,82 @@
     if (append) deck().slides.splice(st.cur + 1, 0, ...out), st.cur++; else { deck().slides = out; st.cur = 0; }
     S.renderAll();
   }
+  // ── Page tools: how the agent in this app's chat reads and changes the OPEN deck ──
+  // The deck lives here in the page. The assistant's turn runs in the chat that hosts this window;
+  // with these it reads the slides, changes them, and reads again to check.
+  const elText = (e) => (e.text?.paras || []).map((p) => p.runs.map((r) => r.t).join(''));
+  const slideView = (sl, i, full) => ({ slide: i + 1, layout: sl.layout, title: (sl.els.find((e) => e.ph === 'title') ? elText(sl.els.find((e) => e.ph === 'title')).join(' ') : ''), ...(full ? { notes: sl.notes || '', elements: sl.els.map((e) => ({ id: e.id, type: e.type, role: e.ph || undefined, lines: e.text ? elText(e) : undefined, x: Math.round(e.x), y: Math.round(e.y), w: Math.round(e.w), h: Math.round(e.h) })) } : { text: sl.els.filter((e) => e.ph !== 'title').flatMap(elText).filter(Boolean).slice(0, 12), notes: sl.notes ? true : undefined }) });
+  const slideAt = (n) => { const i = Math.round(Number(n)) - 1; if (!(i >= 0 && i < deck().slides.length)) throw new Error('slide must be 1..' + deck().slides.length); return i; };
+  function exposeTools() {
+    if (!(window.aicw && aicw.expose)) return;
+    aicw.expose({
+      deck: {
+        description: 'The open presentation: title, size, the slide on screen, and every slide in order (number, layout, title, text lines). Call it first, and again after a change to check it.',
+        args: {},
+        run: () => ({ title: deck().title || '', width: deck().w, height: deck().h, current: st.cur + 1, count: deck().slides.length, slides: deck().slides.slice(0, 120).map((sl, i) => slideView(sl, i, false)) })
+      },
+      slide: {
+        description: 'One slide in detail: its elements (id, type, role title | subtitle | body, text lines, position) and its speaker notes.',
+        args: { slide: 'slide number, from 1 (default: the slide on screen)' },
+        run: (a) => { const i = a.slide === undefined ? st.cur : slideAt(a.slide); return slideView(deck().slides[i], i, true); }
+      },
+      add_slides: {
+        mutating: true,
+        description: 'Add slides after a slide (default: after the slide on screen), in the deck theme. layout: title | content | two | section | quote.',
+        args: { slides: 'array of {layout, title, subtitle?, bullets?: ["…"], notes?}', after: 'slide number to insert after (0 = at the start)' },
+        run: (a) => { const items = (Array.isArray(a.slides) ? a.slides : []).slice(0, 30); if (!items.length) throw new Error('slides is required: [{title, bullets}]'); S.commitEdit(); S.push('ai'); if (a.after !== undefined) st.cur = Math.max(-1, Math.min(deck().slides.length - 1, Math.round(Number(a.after)) - 1)); applyGenerated(items, true); return { added: items.length, count: deck().slides.length, current: st.cur + 1 }; }
+      },
+      set_text: {
+        mutating: true,
+        description: 'Replace the text of one element of a slide: one line per paragraph; bullets and style of the element are kept. element = its id from `slide`, or a role: "title" | "subtitle" | "body".',
+        args: { slide: 'slide number', element: 'element id or role', lines: 'array of strings (one per paragraph)' },
+        run: (a) => { const i = slideAt(a.slide); const sl = deck().slides[i]; const e = sl.els.find((x) => x.id === a.element) || sl.els.find((x) => x.ph === a.element); if (!e || !e.text) throw new Error('no text element "' + a.element + '" on slide ' + (i + 1) + ' (see the slide tool for ids and roles)'); const lines = (Array.isArray(a.lines) ? a.lines : [a.lines ?? a.text ?? '']).map(String); S.commitEdit(); S.push('ai'); const base = e.text.paras; e.text.paras = lines.map((t, k) => { const p = base[Math.min(k, base.length - 1)] || { runs: [] }; return { ...p, runs: [{ ...(p.runs[0] || {}), t }] }; }); S.renderAll(); return { slide: i + 1, element: e.id, lines: elText(e) }; }
+      },
+      set_notes: {
+        mutating: true,
+        description: 'Set the speaker notes of a slide.',
+        args: { slide: 'slide number', notes: 'text' },
+        run: (a) => { const i = slideAt(a.slide); S.push('ai'); deck().slides[i].notes = String(a.notes || ''); S.renderAll(); return { slide: i + 1, notes: deck().slides[i].notes.length + ' chars' }; }
+      },
+      remove_slide: {
+        mutating: true,
+        description: 'Delete one slide (the person can undo with Ctrl+Z).',
+        args: { slide: 'slide number' },
+        run: (a) => { const i = slideAt(a.slide); if (deck().slides.length < 2) throw new Error('a deck keeps at least one slide'); S.commitEdit(); S.push('ai'); deck().slides.splice(i, 1); st.cur = Math.min(st.cur, deck().slides.length - 1); S.renderAll(); return { count: deck().slides.length }; }
+      },
+      move_slide: {
+        mutating: true,
+        description: 'Move a slide to another position.',
+        args: { slide: 'slide number', to: 'new position, from 1' },
+        run: (a) => { const i = slideAt(a.slide); const to = Math.max(0, Math.min(deck().slides.length - 1, Math.round(Number(a.to)) - 1)); S.commitEdit(); S.push('ai'); const [x] = deck().slides.splice(i, 1); deck().slides.splice(to, 0, x); st.cur = to; S.renderAll(); return { moved: i + 1, to: to + 1 }; }
+      },
+      show_slide: {
+        description: 'Put a slide on the person\'s screen.',
+        args: { slide: 'slide number' },
+        run: (a) => { const i = slideAt(a.slide); S.go(i); return { current: i + 1 }; }
+      }
+    });
+  }
+  try { exposeTools(); } catch {}
+  S.aiAsk = async (question, stat) => {
+    if (needAI()) return; const say = (t) => { if (stat) stat.textContent = t; else S.toast(t, 6000); };
+    if (!(aicw.ask && aicw.exposed)) return say('Cần AICoworker bản mới hơn cho yêu cầu tự do.');
+    exposeTools(); S.commitEdit(); say('AI đang làm… (xem tiến trình trong chat của app)');
+    try {
+      const context = ['Deck: ' + (deck().title || '(untitled)') + ', ' + deck().slides.length + ' slide(s)', 'Slide on screen: ' + (st.cur + 1), 'Selected elements: ' + (S.selEls().map((e) => e.id).join(', ') || 'none'), 'Outline:', deckOutline().slice(0, 3000)].join('\n');
+      const r = await aicw.ask(question, { context, timeoutMs: 280000 });
+      say(r && r.state === 'working' ? 'AI vẫn đang làm — câu trả lời sẽ hiện trong chat của app.' : ((r && (r.content || r.text)) || 'Xong'));
+    } catch (e) { say('Lỗi AI: ' + (e.message || e)); }
+  };
   S.aiPanel = () => {
-    const d = aiBox('✨ AI Slide', `<div class="ui-tabs pills" style="display:flex;gap:4px"><button class="ui-tab active" data-m="gen">Tạo bản trình chiếu</button><button class="ui-tab" data-m="slide">Thêm slide</button><button class="ui-tab" data-m="edit">Sửa chữ</button></div>
-      <div data-pane="gen"><textarea class="ui-textarea" id="aiTopic" placeholder="Chủ đề, ví dụ: Giới thiệu sản phẩm AI Coworker cho khách hàng doanh nghiệp, 8 slide, giọng chuyên nghiệp"></textarea><div class="row"><label class="ds-lbl">Số slide <input class="ds-num" type="number" id="aiN" value="8" min="3" max="25"></label><label class="ds-lbl">Ngôn ngữ <select class="ds-sel" style="width:110px" id="aiLang"><option>Tiếng Việt</option><option>English</option></select></label><label class="ds-lbl"><input type="checkbox" id="aiNotes" checked> Ghi chú người nói</label></div><button class="ui-btn primary" id="aiGo">Tạo</button></div>
+    const d = aiBox('✨ AI Slide', `<div class="ui-tabs pills" style="display:flex;gap:4px"><button class="ui-tab active" data-m="ask">Yêu cầu</button><button class="ui-tab" data-m="gen">Tạo bản trình chiếu</button><button class="ui-tab" data-m="slide">Thêm slide</button><button class="ui-tab" data-m="edit">Sửa chữ</button></div>
+      <div data-pane="ask"><textarea class="ui-textarea" id="aiAskQ" placeholder="Nhờ AI làm gì với bản trình chiếu đang mở, ví dụ: thêm slide so sánh 3 gói giá sau slide 2, rút gọn chữ ở slide 4, viết ghi chú người nói cho tất cả slide"></textarea><button class="ui-btn primary" id="aiAskGo">Gửi</button></div>
+      <div data-pane="gen" hidden><textarea class="ui-textarea" id="aiTopic" placeholder="Chủ đề, ví dụ: Giới thiệu sản phẩm AI Coworker cho khách hàng doanh nghiệp, 8 slide, giọng chuyên nghiệp"></textarea><div class="row"><label class="ds-lbl">Số slide <input class="ds-num" type="number" id="aiN" value="8" min="3" max="25"></label><label class="ds-lbl">Ngôn ngữ <select class="ds-sel" style="width:110px" id="aiLang"><option>Tiếng Việt</option><option>English</option></select></label><label class="ds-lbl"><input type="checkbox" id="aiNotes" checked> Ghi chú người nói</label></div><button class="ui-btn primary" id="aiGo">Tạo</button></div>
       <div data-pane="slide" hidden><textarea class="ui-textarea" id="aiOne" placeholder="Nội dung slide cần thêm, ví dụ: So sánh 3 gói giá Basic/Pro/Team"></textarea><button class="ui-btn primary" id="aiOneGo">Thêm slide sau slide hiện tại</button></div>
       <div data-pane="edit" hidden><small style="color:var(--ds-muted)">Chọn hộp chữ trên slide (hoặc không chọn gì = cả slide), rồi:</small><div class="row">${[['improve', 'Viết hay hơn'], ['shorter', 'Ngắn gọn hơn'], ['longer', 'Chi tiết hơn'], ['spell', 'Sửa chính tả'], ['translate', 'Dịch Anh ↔ Việt'], ['notes', 'Viết ghi chú người nói']].map(([k, l]) => `<button class="ui-btn sm" data-rw="${k}">${l}</button>`).join('')}</div></div>
       <div id="aiStat" class="ds-lbl"></div>`);
     d.addEventListener('click', (e) => { const m = e.target.closest('[data-m]'); if (m) { $$('[data-m]', d).forEach((x) => x.classList.toggle('active', x === m)); $$('[data-pane]', d).forEach((p) => (p.hidden = p.dataset.pane !== m.dataset.m)); } const rw = e.target.closest('[data-rw]'); if (rw) S.aiRewrite(rw.dataset.rw); });
+    $('#aiAskGo', d).onclick = async () => { const q = $('#aiAskQ', d).value.trim(); if (!q) return; $('#aiAskGo', d).disabled = true; try { await S.aiAsk(q, $('#aiStat', d)); } finally { const g = $('#aiAskGo', d); if (g) g.disabled = false; } };
     $('#aiGo', d).onclick = async () => {
       if (needAI()) return; const topic = $('#aiTopic', d).value.trim(); if (!topic) return; const n = +$('#aiN', d).value || 8; const lang = $('#aiLang', d).value;
       $('#aiStat', d).textContent = 'AI đang viết dàn ý… (xem tiến trình trong chat của app)'; $('#aiGo', d).disabled = true;

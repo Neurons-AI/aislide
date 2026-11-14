@@ -8,6 +8,17 @@ description: "Trình chiếu giống MS PowerPoint, có AI tạo slide — mở/
 An AI App (`app.json`): the page is `assets/app.html`, the backend is `backend/` and runs
 with no model turn. The user opens it from **AI Apps**; you are its assistant.
 
+## Page tools (how you read and change the open deck)
+
+The deck lives in the window, not in the backend. The window offers page tools; call them with
+`app` → `{"action":"page","id":"app-<this skill>","tool":"…","args":{…}}` (no `tool` = the list):
+`deck`, `slide {slide}`, `add_slides {slides, after?}`, `set_text {slide, element, lines}`,
+`set_notes`, `remove_slide`, `move_slide`, `show_slide`. Read before you answer or change
+anything, and read again after a change — the person edits between turns. The "Yêu cầu" tab of the
+✨ AI panel is the same thing: one turn of this chat (`aicw.ask`).
+
+
+
 ## Working with the app
 
 - Run its backend with the `app` tool instead of redoing its work by hand:
